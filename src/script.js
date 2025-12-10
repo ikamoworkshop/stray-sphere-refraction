@@ -11,27 +11,6 @@ import { CustomPass } from './shader/postProcessing/customPass.js'
 import noiseVertex from './shader/distortion/vertex.glsl'
 import noiseFragment from './shader/distortion/fragment.glsl'
 
-import noiseVertexTwo from './shader/sphereTwo/vertex.glsl'
-import noiseFragmentTwo from './shader/sphereTwo/fragment.glsl'
-
-/**
- * Base
- */
-// Debug
-// const gui = new GUI()
-// const debugObject = {}
-// debugObject.progress = 0
-// debugObject.mRefractionRatio = 1.1
-// debugObject.mFresnelBias = 0
-// debugObject.mFresnelScale = 1.2
-// debugObject.mFresnelPower = 1.0
-
-// gui.add(debugObject, 'progress').min(0).max(1).step(.1)
-// gui.add(debugObject, 'mRefractionRatio').min(0).max(2).step(.1).onChange(() => {materialTwo.uniforms.mRefractionRatio.value = debugObject.mRefractionRatio})
-// gui.add(debugObject, 'mFresnelBias').min(0).max(2).step(.1).onChange(() => {materialTwo.uniforms.mFresnelBias.value = debugObject.mFresnelBias})
-// gui.add(debugObject, 'mFresnelScale').min(0).max(2).step(.1).onChange(() => {materialTwo.uniforms.mFresnelScale.value = debugObject.mFresnelScale})
-// gui.add(debugObject, 'mFresnelPower').min(0).max(2).step(.1).onChange(() => {materialTwo.uniforms.mFresnelPower.value = debugObject.mFresnelPower})
-
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
@@ -39,25 +18,11 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 /**
- * Textures
- */
-const textureLoader = new THREE.TextureLoader()
-
-const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, {
-    format: THREE.RGBAFormat,
-    generateMipmaps: true,
-    minFilter: THREE.LinearMipMapLinearFilter,
-    colorSpace: THREE.SRGBColorSpace
-})
-
-const cubeCamera = new THREE.CubeCamera(0.1, 10, cubeRenderTarget)
-
-/**
  * Test mesh
  */
 // Geometry
-const geometry = new THREE.SphereGeometry(2, 128, 128)
-const geometryTwo = new THREE.IcosahedronGeometry(1)
+// const geometry = new THREE.PlaneGeometry(2.5, 2.5, 128, 128)
+const geometry = new THREE.CylinderGeometry(1.2, 1.2, 0.1, 128)
 
 // Material
 const material = new THREE.ShaderMaterial({
@@ -65,30 +30,19 @@ const material = new THREE.ShaderMaterial({
     uniforms:{
         uTime: new THREE.Uniform(0),
         uResolution: new THREE.Uniform(new THREE.Vector4()),
-    },
-    vertexShader: noiseVertex,
-    fragmentShader: noiseFragment
-})
-
-const materialTwo = new THREE.ShaderMaterial({
-    side: THREE.DoubleSide,
-    uniforms:{
-        uTime: new THREE.Uniform(0),
-        uResolution: new THREE.Uniform(new THREE.Vector4()),
-        tCube: new THREE.Uniform(0),
         mRefractionRatio: new THREE.Uniform(1.02),
         mFresnelBias: new THREE.Uniform(0.1),
         mFresnelScale: new THREE.Uniform(2.0),
         mFresnelPower: new THREE.Uniform(1.0),
     },
-    vertexShader: noiseVertexTwo,
-    fragmentShader: noiseFragmentTwo
+    vertexShader: noiseVertex,
+    fragmentShader: noiseFragment
 })
 
 // Mesh
 const mesh = new THREE.Mesh(geometry, material)
-const meshTwo = new THREE.Mesh(geometryTwo, materialTwo)
-scene.add(mesh, meshTwo)
+mesh.rotation.x = Math.PI * .5;
+scene.add(mesh)
 
 /**
  * Sizes
@@ -154,12 +108,15 @@ window.addEventListener('resize', () =>
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, .1, 10)
+let mousePos = {x: 0, y: 0}
+let lerpVector = new THREE.Vector3();
 camera.position.set(0, 0, 2)
 scene.add(camera)
 
-// Controls
-const controls = new OrbitControls(camera, canvas)
-controls.enableDamping = true
+window.addEventListener('mousemove', (e) => {
+    mousePos.x = e.pageX / window.innerWidth * -2 + 1;
+    mousePos.y = e.pageY / window.innerHeight * 2 - 1;
+})
 
 /**
  * Renderer
@@ -187,18 +144,14 @@ const clock = new THREE.Clock()
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
-
-    // Update controls
-    controls.update()
     material.uniforms.uTime.value = elapsedTime
 
-    meshTwo.visible = false
-    cubeCamera.update(renderer, scene)
-    meshTwo.visible = true
-    materialTwo.uniforms.tCube.value = cubeRenderTarget.texture
+    // Update Camera
+    lerpVector.set(mousePos.x * .5, mousePos.y * .5, 1.5);
+    camera.position.lerp(lerpVector, 0.05);
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
 
     // Render
-    renderer.render(scene, camera)
     composer.render(scene, camera)
 
     // Call tick again on the next frame

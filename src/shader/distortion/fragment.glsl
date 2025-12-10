@@ -48,17 +48,38 @@ float lines(vec2 uv, float offset){
 }
 
 void main(){
-    float noise = noise(vPosition + uTime * .3);
-    vec3 color1 = vec3(0.83, 0.13, 1.0);
-    vec3 color2 = vec3(0.26, 1.0, 0.96);
-    vec3 color3 = vec3(0.04, 0.05, 0.09);
+    float noise = noise(vPosition + uTime * .8);
+    vec3 color1 = vec3(1.0, 0.95, 0.24);
+    vec3 color2 = vec3(0.82, 0.82, 1.0);
+    vec3 color3 = vec3(1.0, 0.15, 0.65);
+    vec3 color4 = vec3(0.0, 0.76, 1.0);
 
-    vec2 baseUV = rotate2D(noise) * vPosition.xy;
-    float patternOne = lines(baseUV, .5);
-    float patternTwo = lines(baseUV, .1);
+    float dist = length(vUv - vec2(.5));
+    float radius = .49;
 
+    // if(dist > .5) discard;
+
+    // Out Edge
+    float outerEdge = pow(dist/radius, 110.0);
+    float magOut = .5 - cos(outerEdge - 1.0);
+    vec2 uvOut = dist < radius ? vUv + magOut * (vUv - vec2(.5)) : vUv;
+
+    // Inner Edge
+    float innerEdge = pow(dist/radius, -7.0);
+    vec2 innerEdgePower = vec2(sin(vUv.x - .5), sin(vUv.y - .5));
+    float magIn = .5 - cos(innerEdge - 1.0);
+    vec2 uvIn = dist > radius ? vUv : (vUv - vec2(.5)) * magIn * innerEdgePower;
+
+    vec2 uvDisplay = vUv + uvOut * 0.5 + uvIn;
+    uvDisplay *= 2.0;
+
+    vec2 baseUV = rotate2D(noise * 12.0) * uvDisplay  * vPosition.xy;
+    float patternOne = lines(baseUV, .2);
+    float patternTwo = lines(baseUV, .6);
+    float patternThree = lines(baseUV, .3);
     vec3 baseColor = mix(color1, color2, patternOne);
-    vec3 baseColor2 = mix(baseColor, color3, patternTwo);
+    baseColor = mix(baseColor, color3, patternTwo);
+    baseColor = mix(baseColor, color4, patternThree);
 
-    gl_FragColor = vec4(vec3(baseColor2), 1.0);
+    gl_FragColor = vec4(vec3(baseColor), 1.0);
 }
