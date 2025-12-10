@@ -5,11 +5,16 @@ import GUI from 'lil-gui'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 
 import { CustomPass } from './shader/postProcessing/customPass.js'
 
 import noiseVertex from './shader/distortion/vertex.glsl'
 import noiseFragment from './shader/distortion/fragment.glsl'
+import WaterTexture from './post-processing/WaterTexture.js'
+
+// Fluid
+const waterTexture = new WaterTexture();
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -28,6 +33,7 @@ const geometry = new THREE.CylinderGeometry(1.2, 1.2, 0.1, 128)
 const material = new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
     uniforms:{
+        tFluid: waterTexture.texture,
         uTime: new THREE.Uniform(0),
         uResolution: new THREE.Uniform(new THREE.Vector4()),
         mRefractionRatio: new THREE.Uniform(1.02),
@@ -38,6 +44,7 @@ const material = new THREE.ShaderMaterial({
     vertexShader: noiseVertex,
     fragmentShader: noiseFragment
 })
+material.needsUpdate = true;
 
 // Mesh
 const mesh = new THREE.Mesh(geometry, material)
@@ -116,6 +123,13 @@ scene.add(camera)
 window.addEventListener('mousemove', (e) => {
     mousePos.x = e.pageX / window.innerWidth * -2 + 1;
     mousePos.y = e.pageY / window.innerHeight * 2 - 1;
+
+    const point = {
+        x: e.pageX / sizes.width,
+        y: e.pageY / sizes.height
+    }
+
+    waterTexture.addPoint(point)
 })
 
 /**
@@ -133,8 +147,12 @@ composer.setSize(sizes.width, sizes.height)
 composer.addPass(new RenderPass(scene, camera))
 
 const customPass = new ShaderPass(CustomPass)
+customPass.uniforms['tFluid'].value = waterTexture.texture
 customPass.uniforms[ 'scale' ].value = 4;
 composer.addPass(customPass)
+
+const smaaPass = new SMAAPass();
+composer.addPass(smaaPass)
 
 /**
  * Animate
@@ -150,6 +168,8 @@ const tick = () =>
     lerpVector.set(mousePos.x * .5, mousePos.y * .5, 1.5);
     camera.position.lerp(lerpVector, 0.05);
     camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+    waterTexture.update();
 
     // Render
     composer.render(scene, camera)

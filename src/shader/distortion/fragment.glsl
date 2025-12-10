@@ -1,5 +1,6 @@
 uniform float uTime;
 uniform vec4 uResolution;
+uniform sampler2D tFluid;
 
 varying vec2 vUv;
 varying vec3 vPosition;

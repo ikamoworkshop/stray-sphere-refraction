@@ -15,6 +15,7 @@ const CustomPass = {
 	uniforms: {
 
 		'tDiffuse': { value: null },
+		'tFluid': {value: null},
 		'tSize': { value: new Vector2( 256, 256 ) },
 		'center': { value: new Vector2( 0.5, 0.5 ) },
 		'angle': { value: 1.57 },
@@ -41,6 +42,7 @@ const CustomPass = {
 		uniform vec2 tSize;
 
 		uniform sampler2D tDiffuse;
+		uniform sampler2D tFluid;
 
 		varying vec2 vUv;
 
@@ -66,14 +68,22 @@ const CustomPass = {
         }
 
 		void main() {
+			vec4 fluid = texture2D(tFluid, vUv);
+			// Convert normalized values into regular unit vector
+			float vx = -(fluid.r *2. - 1.);
+			float vy = -(fluid.g *2. - 1.);
+			// Normalized intensity works just fine for intensity
+			float intensity = fluid.b;
+			float maxAmplitude = 0.5;
+			vec2 newUv = vUv;
+	
+			// newUv.x += vx * intensity * maxAmplitude;
+			// newUv.y += vy * intensity * maxAmplitude;
 
-			vec4 color = texture2D( tDiffuse, vUv );
-
+			vec4 color = texture2D( tDiffuse, newUv );
             vec2 uvRandom = vUv;
             uvRandom.y *= rand(vec2(uvRandom.y, .4));
-
             color.rgb += rand(uvRandom) * .1;
-
             gl_FragColor = color;
 
 		}`
