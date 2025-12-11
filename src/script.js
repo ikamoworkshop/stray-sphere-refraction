@@ -26,8 +26,7 @@ const scene = new THREE.Scene()
  * Test mesh
  */
 // Geometry
-// const geometry = new THREE.PlaneGeometry(2.5, 2.5, 128, 128)
-const geometry = new THREE.CylinderGeometry(1.2, 1.2, 0.1, 128)
+const textureGeometry = new THREE.PlaneGeometry(2.5, 2.5, 128, 128)
 
 // Material
 const material = new THREE.ShaderMaterial({
@@ -47,8 +46,7 @@ const material = new THREE.ShaderMaterial({
 material.needsUpdate = true;
 
 // Mesh
-const mesh = new THREE.Mesh(geometry, material)
-mesh.rotation.x = Math.PI * .5;
+const mesh = new THREE.Mesh(textureGeometry, material)
 scene.add(mesh)
 
 /**
@@ -165,7 +163,7 @@ const tick = () =>
     material.uniforms.uTime.value = elapsedTime
 
     // Update Camera
-    lerpVector.set(mousePos.x * .5, mousePos.y * .5, 1.5);
+    lerpVector.set(mousePos.x * .5, mousePos.y * .5, 2);
     camera.position.lerp(lerpVector, 0.05);
     camera.lookAt(new THREE.Vector3(0, 0, 0))
 

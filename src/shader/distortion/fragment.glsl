@@ -58,7 +58,7 @@ void main(){
     float dist = length(vUv - vec2(.5));
     float radius = .49;
 
-    // if(dist > .5) discard;
+    if(dist > .5) discard;
 
     // Out Edge
     float outerEdge = pow(dist/radius, 110.0);
